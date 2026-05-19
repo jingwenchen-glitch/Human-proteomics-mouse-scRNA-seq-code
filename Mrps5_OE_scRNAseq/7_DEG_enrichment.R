@@ -35,7 +35,7 @@ gene_rank <- tcell_DEG %>%
   dplyr::select(gene, avg_log2FC) %>%
   {setNames(.$avg_log2FC, .$gene)}
 
-# 3. 获取MSigDB基因集（小鼠）
+# 获取MSigDB基因集（小鼠）
 msigdb_sets <- list(
   Hallmark = msigdbr(species = "Mus musculus", category = "H"),
   KEGG = msigdbr(species = "Mus musculus", category = "C2") %>% 
@@ -50,7 +50,7 @@ msigdb_sets <- list(
 # 转换为fgsea需要的格式
 pathways <- lapply(msigdb_sets, function(x) split(x$gene_symbol, x$gs_name))
 
-# 4. 执行GSEA分析
+# 执行GSEA分析
 gsea_results <- list()
 output_dir <- "tcell_DEG"
 dir.create(output_dir, showWarnings = FALSE, recursive = TRUE)
@@ -156,7 +156,7 @@ library(org.Mm.eg.db)  # 小鼠注释数据库
 library(dplyr)
 library(enrichplot)    # 可视化
 library(ggplot2)
-# STEP 1: 构建有序基因向量
+# 构建有序基因向量
 gene_list <- tcell_DEG %>%
   filter(!is.na(avg_log2FC)) %>%
   arrange(desc(avg_log2FC)) %>%  # 可改为升序/降序看具体需求
@@ -232,28 +232,24 @@ library(dplyr)
 Idents(tcell_clean) <- "celltype"
 
 # 只保留 cluster 0
-sub <- subset(tcell_clean, idents = c("Tcm-like"))
+sub <- subset(tcell_clean, idents = c("TCM"))
 
-# -------------------------------
-# 1. 获取 KEGG 通路基因集
-# -------------------------------
+# 获取 KEGG 通路基因集
 msig_kegg <- msigdbr(species = "Mus musculus", category = "C2", subcategory = "KEGG_LEGACY")
 
-# 取取相关通路
+# 取相关通路
 gly_kegg  <- msig_kegg %>% filter(gs_name == "KEGG_GLYCOLYSIS_GLUCONEOGENESIS") %>% pull(gene_symbol)
 oxphos_kegg <- msig_kegg %>% filter(gs_name == "KEGG_OXIDATIVE_PHOSPHORYLATION") %>% pull(gene_symbol)
 ribo_kegg <- msig_kegg %>% filter(gs_name == "KEGG_RIBOSOME") %>% pull(gene_symbol)
 
-# -------------------------------
-# 2. 计算单细胞模块分数
-# -------------------------------
+
+# 计算单细胞模块分数
 sub <- AddModuleScore(sub, features = list(gly_kegg), name = "KEGG_GLY_")
 sub <- AddModuleScore(sub, features = list(oxphos_kegg), name = "KEGG_OXPHOS_")
 sub <- AddModuleScore(sub, features = list(ribo_kegg), name = "KEGG_RIBOSOME_")
 
-# -------------------------------
-# 3. 可视化（按 cluster 分组、按 condition 分面）
-# -------------------------------
+
+# 可视化（按 cluster 分组、按 condition 分面）
 VlnPlot(sub, features = c("KEGG_GLY_1"), group.by = "celltype", split.by = "orig.ident", pt.size = 0.1) +
   labs(title="KEGG Glycolysis Activity")
 VlnPlot(sub, features = c("KEGG_OXPHOS_1"), group.by = "celltype", split.by = "orig.ident", pt.size = 0.1) +
@@ -261,24 +257,21 @@ VlnPlot(sub, features = c("KEGG_OXPHOS_1"), group.by = "celltype", split.by = "o
 VlnPlot(sub, features = c("KEGG_RIBOSOME_1"), group.by = "celltype", split.by = "orig.ident", pt.size = 0.1) +
   labs(title="KEGG Ribosome Activity")
 
-# -------------------------------
-# 1. 获取 GOCC 通路基因集
-# -------------------------------
+
+# 获取 GOCC 通路基因集
 msig_gocc <- msigdbr(species = "Mus musculus", category = "C5", subcategory = "CC")
 
 # 取相关通路
 ribo_gocc  <- msig_gocc %>% filter(gs_name == "GOCC_RIBOSOME") %>% pull(gene_symbol)
 res_gocc <- msig_gocc %>% filter(gs_name == "GOCC_RESPIRATORY_CHAIN_COMPLEX") %>% pull(gene_symbol)
 org_ribo_gocc <- msig_gocc %>% filter(gs_name == "GOCC_ORGANELLAR_RIBOSOME") %>% pull(gene_symbol)
-# -------------------------------
-# 2. 计算单细胞模块分数
-# -------------------------------
+
+# 计算单细胞模块分数
 sub <- AddModuleScore(sub, features = list(ribo_gocc), name = "GOCC_RIBO_")
 sub <- AddModuleScore(sub, features = list(res_gocc), name = "GOCC_RESPI_")
 sub <- AddModuleScore(sub, features = list(org_ribo_gocc), name = "GOCC_ORGAN_RIBO_")
-# -------------------------------
-# 3. 可视化（按 cluster 分组、按 condition 分面）
-# -------------------------------
+
+# 可视化（按 cluster 分组、按 condition 分面）
 VlnPlot(sub, features = c("GOCC_RIBO_1"), group.by = "celltype", split.by = "orig.ident", pt.size = 0.1) +
   labs(title="GOCC Ribosome Activity")
 VlnPlot(sub, features = c("GOCC_RESPI_1"), group.by = "celltype", split.by = "orig.ident", pt.size = 0.1) +
@@ -286,9 +279,8 @@ VlnPlot(sub, features = c("GOCC_RESPI_1"), group.by = "celltype", split.by = "or
 VlnPlot(sub, features = c("GOCC_ORGAN_RIBO_1"), group.by = "celltype", split.by = "orig.ident", pt.size = 0.1) +
   labs(title="GOCC Organellar Ribosome Activity") 
 
-# -------------------------------
-# 1. 获取 GOBP 通路基因集
-# -------------------------------
+
+# 获取 GOBP 通路基因集
 msig_gobp <- msigdbr(species = "Mus musculus", category = "C5", subcategory = "BP")
 
 # 取相关通路
@@ -296,16 +288,14 @@ mitogene_gobp  <- msig_gobp %>% filter(gs_name == "GOBP_MITOCHONDRIAL_GENE_EXPRE
 mitotrans_gobp <- msig_gobp %>% filter(gs_name == "GOBP_MITOCHONDRIAL_TRANSLATION") %>% pull(gene_symbol)
 oxphos_gobp <- msig_gobp %>% filter(gs_name == "GOBP_OXIDATIVE_PHOSPHORYLATION") %>% pull(gene_symbol)
 fao_gobp <- msig_gobp %>% filter(gs_name == "GOBP_FATTY_ACID_BETA_OXIDATION") %>% pull(gene_symbol)
-# -------------------------------
-# 2. 计算单细胞模块分数
-# -------------------------------
+
+# 计算单细胞模块分数
 sub <- AddModuleScore(sub, features = list(ribo_gocc), name = "GOBP_MITOGENE_")
 sub <- AddModuleScore(sub, features = list(res_gocc), name = "GOBP_MITOTRANS_")
 sub <- AddModuleScore(sub, features = list(org_ribo_gocc), name = "GOBP_OXPHOS_")
 sub <- AddModuleScore(sub, features = list(fao_gobp), name = "GOBP_FAO_")
-# -------------------------------
-# 3. 可视化（按 cluster 分组、按 condition 分面）
-# -------------------------------
+
+# 可视化（按 cluster 分组、按 condition 分面）
 VlnPlot(sub, features = c("GOBP_MITOGENE_1"), group.by = "celltype", split.by = "orig.ident", pt.size = 0.1) +
   labs(title="GOBP Mitochondrial gene expression Activity")
 VlnPlot(sub, features = c("GOBP_MITOTRANS_1"), group.by = "celltype", split.by = "orig.ident", pt.size = 0.1) +
@@ -387,5 +377,3 @@ ggplot(meta_melt, aes(x = orig.ident, y = Score, fill = orig.ident)) +
 
 ggsave("enrichment_results/interested_pathway_violin_plot_cluster0.pdf", width = 7.5, height = 6)
 ggsave("enrichment_results/interested_pathway_violin_plot_cluster0.png", width = 7.5, height = 6, dpi = 300)
-
-

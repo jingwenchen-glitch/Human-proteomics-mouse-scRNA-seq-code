@@ -18,18 +18,18 @@ table(combined.int@active.ident)
 colnames(combined.int@meta.data) 
 
 # 基于每个 cluster 的平均表达谱，计算 cluster 间的相关性矩阵，并绘制热图
-# 1. 使用 AggregateExpression 获取 pseudo-bulk 表达矩阵（基于 cluster）
+# 使用 AggregateExpression 获取 pseudo-bulk 表达矩阵（基于 cluster）
 pseudo_bulk <- AggregateExpression(combined.int, group.by = "seurat_clusters", assay = "RNA", slot = "data")
 expr_mat <- pseudo_bulk$RNA  # 提取 RNA assay 的表达矩阵
-# 2. 确保是 matrix 格式
+# 确保是 matrix 格式
 expr_mat <- as.matrix(expr_mat)
-# 3. 计算相关性矩阵
+# 计算相关性矩阵
 cor_mat <- cor(expr_mat, method = "pearson")
 # 去掉行名和列名中的 "g"
 rownames(cor_mat) <- sub("^g", "", rownames(cor_mat))
 colnames(cor_mat) <- sub("^g", "", colnames(cor_mat))
 
-# 4. 绘制热图
+# 绘制热图
 # 设置色条范围与标签
 breaks <- seq(-1, 1, length.out = 100)
 colors <- colorRampPalette(c("darkred", "white", "darkblue"))(length(breaks) - 0.5)
@@ -113,7 +113,7 @@ ggplot(sample_cluster_stats, aes(x = sample, y = percent, fill = cluster)) +
 ggsave("Cluster/Cluster_Percentage_By_Sample.pdf", width = 6, height = 4)
 ggsave("Cluster/Cluster_Percentage_By_Sample.png", width = 6, height = 4, dpi = 300)
 
-# 1. 计算聚类比例并修改图例标签
+# 计算聚类比例并修改图例标签
 # 计算每个聚类的比例
 clusters <- combined.int@meta.data$RNA_snn_res.0.15
 cluster_props <- prop.table(table(clusters)) * 100

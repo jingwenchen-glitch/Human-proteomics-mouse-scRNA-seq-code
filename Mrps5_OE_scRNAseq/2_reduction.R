@@ -23,6 +23,7 @@ LayerData(combined, assay = "RNA", layer = "counts")
 # 使用JoinLayers函数对layers进行合并
 combined <- JoinLayers(combined)
 combined
+
 # 查看combined内部的一些信息，以此来检查数据是否完整
 dim(combined[["RNA"]]$counts )
 as.data.frame(combined@assays$RNA$counts[1:10, 1:2])
@@ -83,7 +84,7 @@ p3_tree
 ggsave(plot=p3_tree, filename="Cluster/Tree_diff_resolution.png", dpi = 300)
 table(combined.all@active.ident) 
 
-# 将 RNA_snn_res.0.15 设为 active.ident（默认聚类标签）
+# 将 RNA_snn_res.0.15 设为 active.ident
 combined.all <- SetIdent(combined.all, value = "RNA_snn_res.0.15")
 # 同时修改 meta.data 中的 seurat_clusters，使它等于 RNA_snn_res.0.15
 combined.all$seurat_clusters <- Idents(combined.all)

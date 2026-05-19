@@ -21,17 +21,17 @@ tcell_clean <- readRDS("tcell_clean.rds")
 library(Matrix)
 library(ggplot2)
 library(pheatmap)
-# 1. 使用 AggregateExpression 获取 pseudo-bulk 表达矩阵（基于 cluster）
+# 使用 AggregateExpression 获取 pseudo-bulk 表达矩阵（基于 cluster）
 pseudo_bulk <- AggregateExpression(tcell_clean, group.by = "seurat_clusters", assay = "RNA", slot = "data")
 expr_mat <- pseudo_bulk$RNA  # 提取 RNA assay 的表达矩阵
-# 2. 确保是 matrix 格式
+# 确保是 matrix 格式
 expr_mat <- as.matrix(expr_mat)
-# 3. 计算相关性矩阵
+# 计算相关性矩阵
 cor_mat <- cor(expr_mat, method = "pearson")
 # 去掉行名和列名中的 "g"
 rownames(cor_mat) <- sub("^g", "", rownames(cor_mat))
 colnames(cor_mat) <- sub("^g", "", colnames(cor_mat))
-# 4. 绘制热图
+# 绘制热图
 # 设置色条范围与标签
 breaks <- seq(-1, 1, length.out = 100)
 colors <- colorRampPalette(c("darkred", "white", "darkblue"))(length(breaks) - 0.5)
@@ -128,7 +128,7 @@ p2
 ggsave("tcell_clean/Cluster_Percentage_By_Sample.pdf", p2, width = 4, height = 4)
 ggsave("tcell_clean/Cluster_Percentage_By_Sample.png", p2, width = 4, height = 4, dpi = 300)
 
-# 1. 计算聚类比例并修改图例标签
+# 计算聚类比例并修改图例标签
 # 计算每个聚类的比例
 clusters <- tcell_clean@meta.data$RNA_snn_res.0.175
 cluster_props <- prop.table(table(clusters)) * 100
@@ -253,11 +253,11 @@ DotPlot(tcell_clean, features = genes_to_plot) +
 
 # cluster命名
 celltype <- c(
-  "0" = "Tcm-like",
-  "1" = "Proliferating_1", 
-  "2" = "Treg", 
-  "3" = "Trm-like", 
-  "4" = "Proliferating_2"
+  "0" = "TCM",
+  "1" = "Proliferating", 
+  "2" = "Foxp3+", 
+  "3" = "TRM", 
+  "4" = "TEM"
 )
 
 # 应用到 Seurat 对象中：
@@ -402,7 +402,7 @@ library(ggplot2)
 library(scales)
 library(grid)
 
-# 1. 创建带比例的新标签
+# 创建带比例的新标签
 celltype_counts <- table(tcell_clean$celltype)
 celltype_props <- round(prop.table(celltype_counts) * 100, 2)
 new_labels <- paste0(names(celltype_props), " (", celltype_props, "%)")
@@ -411,7 +411,7 @@ tcell_clean$celltype_with_prop <- factor(tcell_clean$celltype,
                                          labels = new_labels)
 Idents(tcell_clean) <- "celltype_with_prop"
 
-# 2. 准备每个 sample 的细胞数用于 facet_label
+# 准备每个 sample 的细胞数用于 facet_label
 cell_counts <- table(tcell_clean$orig.ident)
 label_df <- data.frame(
   sample = names(cell_counts),
@@ -419,7 +419,7 @@ label_df <- data.frame(
   label = paste0(names(cell_counts), "\n(", comma(as.numeric(cell_counts)), " cells)")
 )
 
-# 3. 构建主图
+# 构建主图
 p1 <- DimPlot(
   tcell_clean,
   split.by = "sample",          # 按 sample 分图
@@ -452,7 +452,7 @@ p1 <- DimPlot(
     axis.title.y = element_text(size = 14, face = "bold", color = "black")
   )
 
-# 4. 显示
+# 显示
 print(p1)
 
 # 保存图像

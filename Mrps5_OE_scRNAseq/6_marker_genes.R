@@ -43,23 +43,23 @@ write.csv(cluster_markers.filtered, file = "Cluster_markers/Filtered_MarkerGene_
 write.csv(cluster_markers_counts, file = "Cluster_markers/Upregulated_Markers_Barplot_colored.csv", row.names = FALSE)
 
 # 绘图
-# 1. 各亚群上调基因数量统计柱状图
+# 各亚群上调基因数量统计柱状图
 library(ggplot2)
 library(dplyr)
-# 1. 获取cluster levels（顺序）
+# 获取cluster levels（顺序）
 cluster_levels <- levels(Idents(tcell_clean))
-# 2. 生成DimPlot，提取颜色和对应cluster（通过ggplot_build）
+# 生成DimPlot，提取颜色和对应cluster（通过ggplot_build）
 p <- DimPlot(tcell_clean, group.by = "seurat_clusters", label = FALSE)
 p
 plot_data <- ggplot_build(p)$data[[1]]
 # ggplot_build提取的颜色顺序，是按照点顺序的，不一定和cluster_levels顺序一一对应
-# 这里先用 cluster_levels 生成对应颜色，用 scales::hue_pal() 生成颜色
+# 用 cluster_levels 生成对应颜色，用 scales::hue_pal() 生成颜色
 library(scales)
 cluster_colors <- hue_pal()(length(cluster_levels))
 names(cluster_colors) <- cluster_levels
-# 3. 确保 cluster_markers_counts$cluster 是因子且levels和cluster_levels一致
+# 确保 cluster_markers_counts$cluster 是因子且levels和cluster_levels一致
 cluster_markers_counts$cluster <- factor(cluster_markers_counts$cluster, levels = cluster_levels)
-# 4. 绘图，使用手动颜色映射
+# 绘图，使用手动颜色映射
 ggplot(cluster_markers_counts, aes(x = cluster, y = cluster_markers_counts, fill = cluster)) +
   geom_col() +
   scale_fill_manual(values = cluster_colors) +
@@ -70,7 +70,7 @@ ggplot(cluster_markers_counts, aes(x = cluster, y = cluster_markers_counts, fill
 ggsave("Cluster_markers/Upregulated_Markers_Barplot_colored.pdf", width = 6, height = 4)
 ggsave("Cluster_markers/Upregulated_Markers_Barplot_colored.png", width = 6, height = 4, dpi = 300)
 
-# 2. 绘制火山图
+# 绘制火山图
 # 添加分组标签
 library(ggplot2)
 library(dplyr)
@@ -80,28 +80,28 @@ plot_cluster_volcano <- function(cluster_markers.filtered, cluster_colors,
                                  adj_pval_cutoff = 0.05,
                                  output_prefix = "Volcano_Cluster_ColorBand_Filled",
                                  width = 6, height = 4, dpi = 300) {
-  # 1. 处理 cluster 顺序
+  # 处理 cluster 顺序
   cluster_levels_num <- sort(as.numeric(as.character(unique(cluster_markers.filtered$cluster))))
   cluster_levels <- as.character(cluster_levels_num)
   cluster_markers.filtered$cluster <- factor(cluster_markers.filtered$cluster, levels = cluster_levels)
-  # 2. 标记 p 值组
+  # 标记 p 值组
   volcano_df <- cluster_markers.filtered %>%
     mutate(pval_group = ifelse(p_val_adj < adj_pval_cutoff, "adjust Pvalue < 0.01", "adjust Pvalue >= 0.01"))%>%
     mutate(pval_group = factor(pval_group, levels = c("adjust Pvalue < 0.01", "adjust Pvalue >= 0.01")))
-  # 3. Top5 上调基因（每个 cluster）
+  # Top5 上调基因（每个 cluster）
   top_genes <- volcano_df %>%
     filter(pval_group == "adjust Pvalue < 0.01") %>%
     group_by(cluster) %>%
     slice_max(order_by = avg_log2FC, n = 5) %>%
     ungroup()
-  # 4. 底部颜色条
+  # 底部颜色条
   colorbar_df <- data.frame(
     cluster = factor(names(cluster_colors), levels = cluster_levels),
     fill_color = cluster_colors[cluster_levels]
   )
   ymin_fill <- -logfc_cutoff
   ymax_fill <- logfc_cutoff
-  # 5. 绘图
+  # 绘图
   p <- ggplot() +
     geom_rect(data = colorbar_df,
               aes(xmin = as.numeric(cluster) - 0.45,
@@ -123,7 +123,7 @@ plot_cluster_volcano <- function(cluster_markers.filtered, cluster_colors,
     theme(axis.text.x = element_text(angle = 45, hjust = 1),
           legend.position = "top",
           legend.title = element_blank())
-  # 6. 保存图像（PDF & PNG）
+  # 保存图像（PDF & PNG）
   ggsave(paste0(output_prefix, ".pdf"), plot = p, width = width, height = height)
   ggsave(paste0(output_prefix, ".png"), plot = p, width = width, height = height, dpi = dpi)
   message("Volcano plot saved to: ", output_prefix, ".pdf / .png")

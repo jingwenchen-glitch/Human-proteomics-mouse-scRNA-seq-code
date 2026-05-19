@@ -9,7 +9,7 @@ BiocManager::install("scDblFinder")
 BiocManager::install("Seurat")
 BiocManager::install("SeuratDisk")
 
-# ==== 0. 加载必要包 ====
+# 加载必要包
 library(Seurat)
 library(data.table)
 library(dplyr)
@@ -17,33 +17,31 @@ library(scDblFinder)
 library(SingleCellExperiment)
 library(ggplot2)
 library(patchwork)
-# ==== 读取 CellRanger 输出 ====
+# 读取 CellRanger 输出
 NC.data <- Read10X("/Users/jingwenchen/Desktop/Ph.D/Jin Lab/scRNA-seq/Summary/1_Cellranger_result/NC/filtered_feature_bc_matrix/")
 OE.data <- Read10X("/Users/jingwenchen/Desktop/Ph.D/Jin Lab/scRNA-seq/Summary/1_Cellranger_result/OE/filtered_feature_bc_matrix/")
 
-# ==== 创建 Seurat 对象 ====
+# 创建 Seurat 对象 
 NC <- CreateSeuratObject(NC.data, project = "NC", min.cells = 3, min.features = 200)
 OE <- CreateSeuratObject(OE.data, project = "OE", min.cells = 3, min.features = 200)
 
-# ==== 封装函数 ====
+# 封装函数
 process_sample <- function(seurat_obj, sample_name, qc_only = FALSE, prefix = "QC/QC_filter") {
-  # 初始统计
   n_cells_before <- ncol(seurat_obj)
-  # 添加线粒体比例（注意大小写区分）
   seurat_obj[["percent.mt"]] <- PercentageFeatureSet(seurat_obj, pattern = "^mt-")
-  # ==== 若只看QC，提前返回 ====
+  # 若只看QC，提前返回
   if (qc_only) {
     message("Only QC plots generated, sample not filtered.")
     return(seurat_obj)
   }
-  # 1. 基础质控
+  # 基础质控
   seurat_obj[["percent.mt"]] <- PercentageFeatureSet(seurat_obj, pattern = "^mt-")
   seurat_obj <- subset(seurat_obj, 
                        subset = nFeature_RNA > 500 & 
                          nFeature_RNA < 7000 &
                          percent.mt < 25)
   message("Filtered ", n_cells_before - ncol(seurat_obj), " cells from ", sample_name)
-  # 2. 前处理
+  # 前处理
   seurat_obj <- NormalizeData(seurat_obj)
   seurat_obj <- FindVariableFeatures(seurat_obj, nfeatures = 2000)
   seurat_obj <- ScaleData(seurat_obj)
@@ -51,12 +49,12 @@ process_sample <- function(seurat_obj, sample_name, qc_only = FALSE, prefix = "Q
   seurat_obj <- RunUMAP(seurat_obj, dims = 1:20)
   seurat_obj <- FindNeighbors(seurat_obj, dims = 1:20)
   seurat_obj <- FindClusters(seurat_obj, resolution = 0.5)
-  # 3. 多细胞识别
+  # 多细胞识别
   sce <- as.SingleCellExperiment(seurat_obj)
   sce <- scDblFinder(sce, dbr=0.05, clusters = NULL)
   seurat_obj$scDblFinder_score <- sce$scDblFinder.score
   seurat_obj$scDblFinder_class <- sce$scDblFinder.class
-  # 4. 可视化
+  # 可视化
   p1 <- VlnPlot(seurat_obj, features = "scDblFinder_score", group.by = "scDblFinder_class") +
     ggtitle(paste0(sample_name, ": scDblFinder Score")) & theme(
       axis.text.x = element_text(size = 12, face = "bold"),
@@ -74,7 +72,7 @@ process_sample <- function(seurat_obj, sample_name, qc_only = FALSE, prefix = "Q
   ggsave(paste0(prefix, sample_name, "_doublet_detection.pdf"), plot = p_combined, width = 8, height = 6)
   ggsave(paste0(prefix, sample_name, "_doublet_detection.png"), plot = p_combined, width = 8, height = 6, dpi = 300)
 
-  # 5. 过滤掉多细胞
+  # 过滤掉多细胞
   seurat_obj <- subset(seurat_obj, subset = scDblFinder_class == "singlet")
   cat("Removed", n_cells_before - ncol(seurat_obj), "doublets from", sample_name, "\n")
   seurat_obj$sample <- sample_name

@@ -60,6 +60,7 @@ ggsave(filename = "SingleR/SingleR_Annotation_UMAP.png", width = 6, height = 4, 
 saveRDS(combined.int, file = "SingleR_reduction.rds")
 
 combined.int <- readRDS("SingleR_reduction.rds")
+
 # 基于SingleR的结果，对样本按照细胞大类进行再分群分析
 table(combined.int$SingleR_label)  # 确认注释中有 T cells
 # 提取标注为 T cells 的细胞
@@ -102,7 +103,7 @@ tcell_meta <- tcell_clean@meta.data
 # 创建新 Seurat 对象
 tcell_clean <- CreateSeuratObject(counts = tcell_counts, meta.data = tcell_meta)
 
-# 4. 清理旧的 metadata
+# 清理旧的 metadata
 tcell_clean@meta.data <- tcell_clean@meta.data %>%
   dplyr::select(-any_of(c(
     # 聚类相关

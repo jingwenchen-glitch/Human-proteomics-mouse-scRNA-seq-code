@@ -1,4 +1,4 @@
-setwd("D:/tonsil/week13/")
+setwd("/Users/jingwenchen/Desktop/Ph.D/Jin Lab/scRNA-seq/Results/")
 rm(list= ls())
 
 library(Seurat)
@@ -33,7 +33,7 @@ plot_cells(cds,color_cells_by = "celltype",label_groups_by_cluster=FALSE,label_l
 
 
 
-start_celltypes <- c("Tcm-like", "Proliferating_2") # 替换为你的两个起点
+start_celltypes <- c("TCM", "TEM") # 替换为你的两个起点
 closest_vertex <- cds@principal_graph_aux[["UMAP"]]$pr_graph_cell_proj_closest_vertex
 closest_vertex <- as.matrix(closest_vertex[colnames(cds), ]) # 细胞→主图顶点映射
 root_pr_nodes <- igraph::V(principal_graph(cds)[["UMAP"]])$name # 所有主图顶点名称
@@ -47,7 +47,7 @@ for (start_type in start_celltypes) {
 }
 cds = order_cells(cds, root_pr_nodes=root_vertices)
 
-#start = c("Proliferating_2")
+#start = c("TEM")
 #closest_vertex = cds@principal_graph_aux[["UMAP"]]$pr_graph_cell_proj_closest_vertex
 #closest_vertex = as.matrix(closest_vertex[colnames(cds), ])
 #root_pr_nodes = igraph::V(principal_graph(cds)[["UMAP"]])$name
@@ -71,5 +71,5 @@ p2 <- plot_cells(cds,
            )
 
 p1 + p2
-ggsave("./cwj_monocle3_twotree.pdf",width = 14, height = 7)
+ggsave("./monocle3_twotree.pdf",width = 14, height = 7)
 
